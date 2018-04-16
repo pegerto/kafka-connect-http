@@ -3,7 +3,7 @@
   "config": {
     "connector.class": "org.apache.submit.connect.http.StockPriceSourceConnector",
     "tasks.max": 1,
-    "stock.http.url": "https://api.stockprice.com/price",
+    "stock.http.url": "https://api.eu-west-1.stockprice.com",
     "stock.http.interval": 30000,
     "stock.topic": "stock_price_v1"
   }
