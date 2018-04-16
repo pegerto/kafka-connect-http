@@ -6,7 +6,6 @@ import static org.slf4j.LoggerFactory.getLogger;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.URL;
-import java.net.URLConnection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +20,7 @@ public class StockPriceSourceTask extends SourceTask {
   private String topic;
   private Long interval;
   private String url;
+  private String markets;
   private Long last_execution = 0L;
 
 
@@ -31,11 +31,12 @@ public class StockPriceSourceTask extends SourceTask {
 
   @Override
   public void start(Map<String, String> props) {
-    topic = props.get(HTTP_TOPIC);
-    interval = Long.valueOf(props.get(HTTP_INTERVAL));
-    url = props.get(HTTP_URL);
+    topic = props.get(STOCK_TOPIC);
+    interval = Long.valueOf(props.get(STOCK_HTTP_INTERVAL));
+    url = props.get(STOCK_HTTP_URL);
+    markets = props.get(STOCK_MARKETS);
 
-    logger.info("Starting to fetch {} each {} ms ", url, interval);
+    logger.info("Starting to fetch {} each {} ms for markets {}", url, interval, markets);
   }
 
   @Override
