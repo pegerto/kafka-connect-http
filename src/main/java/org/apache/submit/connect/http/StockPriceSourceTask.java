@@ -1,6 +1,6 @@
 package org.apache.submit.connect.http;
 
-import static org.apache.submit.connect.http.HttpSourceConnector.*;
+import static org.apache.submit.connect.http.StockPriceSourceConnector.*;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.BufferedReader;
@@ -15,7 +15,7 @@ import org.apache.kafka.connect.source.SourceRecord;
 import org.apache.kafka.connect.source.SourceTask;
 import org.slf4j.Logger;
 
-public class HttpSourceTask extends SourceTask {
+public class StockPriceSourceTask extends SourceTask {
 
   private Logger logger = getLogger(SourceTask.class);
   private String topic;
@@ -62,13 +62,9 @@ public class HttpSourceTask extends SourceTask {
     StringBuilder content = new StringBuilder();
     try
     {
-      URL url = new URL(sourceUrl);
-      URLConnection urlConnection = url.openConnection();
-      BufferedReader bufferedReader = new BufferedReader(
-          new InputStreamReader(urlConnection.getInputStream()));
-      URL oracle = new URL(sourceUrl);
+      URL stockURL = new URL(sourceUrl);
       BufferedReader in = new BufferedReader(
-          new InputStreamReader(oracle.openStream()));
+          new InputStreamReader(stockURL.openStream()));
 
       String inputLine;
       while ((inputLine = in.readLine()) != null)

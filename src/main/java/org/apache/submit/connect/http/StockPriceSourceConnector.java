@@ -10,12 +10,12 @@ import org.apache.kafka.common.config.ConfigDef.Type;
 import org.apache.kafka.connect.connector.Task;
 import org.apache.kafka.connect.source.SourceConnector;
 
-public class HttpSourceConnector extends SourceConnector {
+public class StockPriceSourceConnector extends SourceConnector {
 
 
-  public static final String HTTP_URL = "http.url";
-  public static final String HTTP_INTERVAL = "http.interval";
-  public static final String HTTP_TOPIC = "http.topic";
+  public static final String HTTP_URL = "stock.http.url";
+  public static final String HTTP_INTERVAL = "stock.http.interval";
+  public static final String HTTP_TOPIC = "stock.topic";
 
   private static ConfigDef CONFIG_DEF = new ConfigDef()
         .define(HTTP_URL, Type.STRING, Importance.HIGH, "Url to publish")
@@ -36,7 +36,7 @@ public class HttpSourceConnector extends SourceConnector {
 
   @Override
   public Class<? extends Task> taskClass() {
-    return HttpSourceTask.class;
+    return StockPriceSourceTask.class;
   }
 
   @Override
