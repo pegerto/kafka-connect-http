@@ -5,6 +5,7 @@
     "tasks.max": 1,
     "stock.http.url": "https://api.eu-west-1.stockprice.com",
     "stock.http.interval": 30000,
-    "stock.topic": "stock_price_v1"
+    "stock.topic": "stock_price_v1",
+    "stock.markers": "lon, nyc, tky"
   }
 }

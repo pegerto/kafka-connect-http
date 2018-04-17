@@ -1,12 +1,18 @@
 package org.apache.submit.connect.http;
 
+import static java.util.Arrays.asList;
+import static java.util.stream.Collectors.toList;
 import static org.apache.submit.connect.http.StockPriceSourceConnector.*;
 import static org.slf4j.LoggerFactory.getLogger;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.kafka.connect.data.Schema;
@@ -20,8 +26,9 @@ public class StockPriceSourceTask extends SourceTask {
   private String topic;
   private Long interval;
   private String url;
-  private String markets;
+  private List<String> markets;
   private Long last_execution = 0L;
+  private Map<String, Object> offsets = new HashMap<>();
 
 
   @Override
@@ -34,22 +41,45 @@ public class StockPriceSourceTask extends SourceTask {
     topic = props.get(STOCK_TOPIC);
     interval = Long.valueOf(props.get(STOCK_HTTP_INTERVAL));
     url = props.get(STOCK_HTTP_URL);
-    markets = props.get(STOCK_MARKETS);
+    markets = asList(props.get(STOCK_MARKETS).split(","));
 
     logger.info("Starting to fetch {} each {} ms for markets {}", url, interval, markets);
+
+    final Map<Map<String, Object>, Map<String, Object>> storageOffsets = context.offsetStorageReader()
+        .offsets(markets.stream().map(s -> asMap(s)).collect(toList()));
+
+    markets.stream().forEach(m -> {
+          if (storageOffsets.get(asMap(m)).containsKey("last_execution")){
+            offsets.put(m, storageOffsets.get(asMap(m)).get("last_execution"));
+          }else {
+            offsets.put(m, 0L);
+          }
+        });
+
   }
 
   @Override
   public List<SourceRecord> poll() throws InterruptedException {
     if (System.currentTimeMillis() > (last_execution + interval)) {
       last_execution = System.currentTimeMillis();
-      logger.info("Pooling url: {}", url);
-      return Collections.singletonList(
-          new SourceRecord(null,
-              null,
-              topic,Schema.BYTES_SCHEMA,
-              getUrlContents(url)));
+      List<SourceRecord> records = new ArrayList<>(markets.size());
 
+      markets.stream().forEach(
+          m -> {
+            logger.info("Pooling url: {}/{}?from={}", url, m, offsets.get(m));
+
+            Map<String, Object>sourcePartition = new HashMap<>();
+            sourcePartition.put(m, null);
+            Map<String, Object>offset = new HashMap<>();
+            offset.put("last_execution",last_execution);
+
+            records.add(new SourceRecord(sourcePartition, offset,
+                topic, Schema.BYTES_SCHEMA,
+                getUrlContents(url, m, (Long) offsets.get(m))));
+            offsets.put(m, last_execution);
+          }
+      );
+      return records;
     }
     return Collections.EMPTY_LIST;
   }
@@ -59,7 +89,7 @@ public class StockPriceSourceTask extends SourceTask {
 
   }
 
-  private static byte[] getUrlContents(String sourceUrl) {
+  private static byte[] getUrlContents(String sourceUrl, String market, Long timestamp) {
     StringBuilder content = new StringBuilder();
     try
     {
@@ -78,4 +108,10 @@ public class StockPriceSourceTask extends SourceTask {
     return content.toString().getBytes();
   }
 
+
+  private Map<String, Object> asMap(String key){
+    Map<String,Object> map = new HashMap<>();
+    map.put(key, null);
+    return map;
+  }
 }
