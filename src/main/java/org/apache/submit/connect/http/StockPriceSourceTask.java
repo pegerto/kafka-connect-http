@@ -1,6 +1,7 @@
 package org.apache.submit.connect.http;
 
 import static java.util.Arrays.asList;
+import static java.util.Collections.*;
 import static java.util.stream.Collectors.toList;
 import static org.apache.submit.connect.http.StockPriceSourceConnector.*;
 import static org.slf4j.LoggerFactory.getLogger;
@@ -59,7 +60,7 @@ public class StockPriceSourceTask extends SourceTask {
   }
 
   @Override
-  public List<SourceRecord> poll() throws InterruptedException {
+  public List<SourceRecord> poll() {
     if (System.currentTimeMillis() > (last_execution + interval)) {
       last_execution = System.currentTimeMillis();
       List<SourceRecord> records = new ArrayList<>(markets.size());
@@ -68,11 +69,8 @@ public class StockPriceSourceTask extends SourceTask {
           m -> {
             logger.info("Pooling url: {}/{}?from={}", url, m, offsets.get(m));
 
-            Map<String, Object>sourcePartition = new HashMap<>();
-            sourcePartition.put(m, null);
-            Map<String, Object>offset = new HashMap<>();
-            offset.put("last_execution",last_execution);
-
+            Map<String, Object>sourcePartition = singletonMap(m, null);
+            Map<String, Object>offset = singletonMap("last_execution",last_execution);
             records.add(new SourceRecord(sourcePartition, offset,
                 topic, Schema.BYTES_SCHEMA,
                 getUrlContents(url, m, (Long) offsets.get(m))));
@@ -81,7 +79,7 @@ public class StockPriceSourceTask extends SourceTask {
       );
       return records;
     }
-    return Collections.EMPTY_LIST;
+    return EMPTY_LIST;
   }
 
   @Override
